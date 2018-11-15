@@ -90,6 +90,11 @@ def login():
     return render_template('login.html')
 
 
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    return redirect(url_for('index'))
+
 @app.route('/login_user', methods=['GET', 'POST'])
 def login_user():
     try:
@@ -108,6 +113,7 @@ def login_user():
         sub_hashed_password = hashlib.sha512(entered_pass.encode() + salt.encode()).hexdigest()
         if stored_pass == sub_hashed_password:
             session['username'] = username
+            authorised = 1
         else:
             return render_template('login.html', logerror='Username or Password is incorrect.')
         return render_template('index.html')
