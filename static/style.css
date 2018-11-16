@@ -101,3 +101,32 @@ body {
     float: right;
     width: 150px;
 }
+
+
+.reg-from-wrapper {
+margin-top: 50px;
+    padding: 20px;
+    text-align: center;
+    width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: rgb(66, 66, 66);
+    border-radius: 15px;
+}
+
+.reg-form-title {
+    font-size: 1.2em;
+    font-weight: 300;
+}
+
+.reg-form input{
+    width: 300px;
+    height: 30px;
+}
+.reg-input-group {
+    margin-top: 20px;
+}
+#reg-btn {
+    margin-top: 30px;
+    height: 30px;
+}

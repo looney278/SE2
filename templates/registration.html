@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8">
+    <title>registration</title>
+
+</head>
+
+<body>
+        <div class='mainmenu'>
+                <div class="website-name">AlmosT witter</div>
+                <a class="menu-buttons">
+                    <a id="signin-btn" class="menu-login-btn" href="/login">Sign in</a>
+                </div>
+            </div>
+    <div class="reg-from-wrapper">
+        <form action="/register_user" method="post" class="reg-form">
+
+            <div class="reg-input-group">
+                <div class="reg-form-title">Username</div><input type="text" name="username" required>
+            </div>
+            <div class="reg-input-group">
+                <div class="reg-form-title">First Name</div><input type="text" name="firstName" required>
+            </div>
+            <div class="reg-input-group">
+                <div class="reg-form-title">Last Name</div><input type="text" name="lastName" required>
+            </div>
+            <div class="reg-input-group">
+                <div class="reg-form-title">Email</div><input type="text" name="email" required>
+            </div>
+            <div class="reg-input-group">
+                    <div class="reg-form-title">Confirm Email</div><input type="text" name="confEmail" required>
+                    {{emailError}}
+            </div>
+            <div class="reg-input-group">
+                    <div class="reg-form-title">Password</div><input type="password" name="password" required>
+            </div>
+            <div class="reg-input-group">
+                    <div class="reg-form-title">Confirm Password</div><input type="password" name="confPassword" required>
+                    {{passwordError}}
+            </div>
+
+                    
+            
+            
+            
+            
+            
+            
+
+            <input type="submit" value="Register" id="reg-btn">
+        </form>
+    </div>
+
+</body>
+
+</html>

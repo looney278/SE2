@@ -6,11 +6,17 @@
 
 <body>
     <div class='mainmenu'>
-        <div class="website-name">AlmosTwitter</div>
-        <div class="menu-buttons">
-            <div id="signin-btn" class="menu-login-btn">Sign in</div>
-            <div id="signup-btn" class="menu-login-btn">Sign up</div>
+        <div class="website-name">AlmosT witter</div>
+        {% if not session.username %}
+        <a class="menu-buttons">
+            <a id="signin-btn" class="menu-login-btn" href="/login">Sign in</a>
+            <a id="signup-btn" class="menu-login-btn" href="/registration">Sign up</a>
         </div>
+        {% else %}
+
+        Welcome, {{ session['username'] }}
+        <a id="signup-btn" class="menu-login-btn" href="/logout">Logout</a>
+        {% endif %}
     </div>
     <div class="newpost">
         <form action="/newpost" method="POST" name="newpost">
