@@ -69,12 +69,16 @@ def register_user():
             cur.execute(search_path)
 
             # duplicate username check
-            cur.execute("SELECT username FROM users where username = (%s)", (username,))
+            #cur.execute("SELECT username FROM users where username = (%s)", (username,))
+            q = "SELECT username FROM users where username = '"+username+"'"
+            cur.execute(q)
             if cur.fetchone() is not None:
                 return render_template('registration.html', usernameError='Username already exists')
 
             # duplicate email check
-            cur.execute("SELECT email FROM users where email = (%s)", (email,))
+            #cur.execute("SELECT email FROM users where email = (%s)", (email,))
+            q = "SELECT email FROM users where email = '"+email+"'"
+            cur.execute(q)
             if cur.fetchone() is not None:
                 return render_template('registration.html', emailError='Email already registered')
 
@@ -82,11 +86,15 @@ def register_user():
             salt = uuid.uuid4().hex
             hashed_password = hashlib.sha512(password.encode() + salt.encode()).hexdigest()
 
-            cur.execute("INSERT INTO users VALUES (%s, %s, %s, %s, %s, %s)", \
-                        [username, firstname, lastname, email, hashed_password, salt])
+            #cur.execute("INSERT INTO users VALUES (%s, %s, %s, %s, %s, %s)", \
+             #           [username, firstname, lastname, email, hashed_password, salt])
+
+            q = "INSERT INTO users VALUES ('"+username+"','"+firstname+"', '"+lastname+"', '"+email+"', '"+hashed_password+"', '"+salt+"')"
+            cur.execute(q)
             conn.commit()
             return render_template('index.html')
     except Exception as e:
+        print(e)
         return render_template('error.html', FUCK=e)
     finally:
         if conn:
@@ -164,9 +172,13 @@ def login_user():
         cur.execute(search_path)
         # Takes the salt stored with the user name, adds and hashes the password provided then checks it against the
         # stored password
-        cur.execute("SELECT password FROM users WHERE username = (%s);", (username,))
+        #cur.execute("SELECT password FROM users WHERE username = (%s);", (username,))
+        q = "SELECT password FROM users WHERE username = '"+username+"'"
+        cur.execute(q)
         stored_pass = str(cur.fetchone()[0])
-        cur.execute("SELECT salt FROM users WHERE username = (%s);", (username,))
+        #cur.execute("SELECT salt FROM users WHERE username = (%s);", (username,))
+        q = "SELECT salt FROM users WHERE username = '"+username+"'"
+        cur.execute(q)
         salt = str(cur.fetchone()[0])
         sub_hashed_password = hashlib.sha512(entered_pass.encode() + salt.encode()).hexdigest()
         if stored_pass == sub_hashed_password:
