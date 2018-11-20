@@ -28,60 +28,22 @@
 
     </div>
     </div>
+
+    {% for post in posts %}
     <div class="posts-wrapper">
         <div class="post">
             <div class="post-header">
-                <div class="post-username">Test User</div>
-                <div class="post-user">@test_user</div>
-                <div class="post-date">22/10/2018</div>
+                <div class="post-username">{{ post[2] }} {{ post[3] }}</div>
+                <div class="post-user">@{{ post[1] }}</div>
+                <div class="post-date">{{ post[4] }}</div>
             </div>
             <div class="post-content">
-                Bacon ipsum dolor amet meatloaf leberkas turkey salami venison cupim frankfurter spare ribs pastrami
-                shankle shoulder cow swine flank ground round. Salami venison pastrami, shoulder ground round chicken
-                capicola shank sirloin hamburger beef alcatra meatloaf picanha rump. Pork belly cow leberkas,
-                tenderloin burgdoggen shank doner. Capicola sirloin porchetta shank beef ribs burgdoggen biltong
-                sausage alcatra spare ribs prosciutto kevin jowl picanha. Landjaeger picanha flank jowl turkey pancetta
-                shoulder. Turkey jerky pork chop.
+                {{ post[5] }}
             </div>
-
         </div>
     </div>
-    <div class="posts-wrapper">
-        <div class="post">
-            <div class="post-header">
-                <div class="post-username">Test User</div>
-                <div class="post-user">@test_user</div>
-                <div class="post-date">22/10/2018</div>
-            </div>
-            <div class="post-content">
-                Bacon ipsum dolor amet meatloaf leberkas turkey salami venison cupim frankfurter spare ribs pastrami
-                shankle shoulder cow swine flank ground round. Salami venison pastrami, shoulder ground round chicken
-                capicola shank sirloin hamburger beef alcatra meatloaf picanha rump. Pork belly cow leberkas,
-                tenderloin burgdoggen shank doner. Capicola sirloin porchetta shank beef ribs burgdoggen biltong
-                sausage alcatra spare ribs prosciutto kevin jowl picanha. Landjaeger picanha flank jowl turkey pancetta
-                shoulder. Turkey jerky pork chop.
-            </div>
+    {% endfor %}
 
-        </div>
-    </div>
-    <div class="posts-wrapper">
-        <div class="post">
-            <div class="post-header">
-                <div class="post-username">Test User</div>
-                <div class="post-user">@test_user</div>
-                <div class="post-date">22/10/2018</div>
-            </div>
-            <div class="post-content">
-                Bacon ipsum dolor amet meatloaf leberkas turkey salami venison cupim frankfurter spare ribs pastrami
-                shankle shoulder cow swine flank ground round. Salami venison pastrami, shoulder ground round chicken
-                capicola shank sirloin hamburger beef alcatra meatloaf picanha rump. Pork belly cow leberkas,
-                tenderloin burgdoggen shank doner. Capicola sirloin porchetta shank beef ribs burgdoggen biltong
-                sausage alcatra spare ribs prosciutto kevin jowl picanha. Landjaeger picanha flank jowl turkey pancetta
-                shoulder. Turkey jerky pork chop.
-            </div>
-
-        </div>
-    </div>
 </body>
 
 </html>

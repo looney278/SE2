@@ -3,6 +3,7 @@ import psycopg2
 import re
 import hashlib
 import uuid
+from datetime import datetime
 
 # RegEx for email.
 emailpattern = re.compile("^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
@@ -25,9 +26,9 @@ def encodeText(text):
     return newstr
 
 def decodeText(text):
-    text.replace("%$MSVZO",";")
-    text.replace("%$6SVA1","--")
-    return text
+    newstr = text.replace("%$MSVZO",";")
+    newstr = newstr.replace("%$6SVA1","--")
+    return newstr
 
 # creates initial connection to the database
 def getconn():
@@ -39,7 +40,21 @@ def getconn():
 @app.route('/')
 @app.route('/index')
 def index():
-    return render_template('index.html')
+    conn = None
+
+    q="select * from user_posts"
+    conn = getconn()
+    cur = conn.cursor()
+    cur.execute(search_path)
+    cur.execute(q)
+    posts = cur.fetchall()
+    decodedPosts = []
+    for post in posts:
+        #post[5] = decodeText(post[5])
+        decodedText = decodeText(post[5])
+        newarr = [post[0],post[1],post[2],post[3],post[4],decodedText]  
+        decodedPosts.append(newarr)
+    return render_template('index.html', posts=decodedPosts)
 
 
 @app.route('/registration')
@@ -182,14 +197,14 @@ def newpost():
         cur.execute(search_path)
         text = request.form['post-text']
         santext = encodeText(text)
-        print(santext)
-        q = "INSERT INTO posts (user_id,datetime,text) VALUES ("+session['id']+",'NULL','"+santext+"')"
+        dt = str(datetime.now().strftime('%d-%b-%Y %H:%M:%S '))
+        q = "INSERT INTO posts (user_id,datetime,text) VALUES ("+session['id']+",'"+dt+"','"+santext+"')"
         cur.execute(q)
         conn.commit()
-        return redirect(url_for('index'))   
+        return redirect(url_for('index'))  
     except Exception as e:
         print(e)
-        return render_template('ERROR.html', FUCK=e)
+        return redirect(url_for('index'))  
     finally:
         if conn:
             conn.close()  
