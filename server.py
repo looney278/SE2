@@ -17,6 +17,18 @@ app.secret_key = 'mSMKW@Oa^8ingejvKj_<8Je1;_|Y&]n,J<^EK@!pupC=Mg.$;Df?q|`}a|FF_'
 search_path = 'SET search_path TO assignment'
 
 
+
+#some sql injection protection to be used in user posts
+def encodeText(text):
+    newstr = text.replace(";","%$MSVZO") #replacing semicolon
+    newstr = newstr.replace("--","%$6SVA1") #replacing --
+    return newstr
+
+def decodeText(text):
+    text.replace("%$MSVZO",";")
+    text.replace("%$6SVA1","--")
+    return text
+
 # creates initial connection to the database
 def getconn():
     connstr = "host='localhost' dbname='postgres' user='postgres' password='password'"
@@ -161,6 +173,28 @@ def logout():
     return redirect(url_for('index'))
 
 
+@app.route('/newpost', methods=['POST']) 
+def newpost(): 
+    try:
+        conn = None
+        conn = getconn()
+        cur = conn.cursor()
+        cur.execute(search_path)
+        text = request.form['post-text']
+        santext = encodeText(text)
+        print(santext)
+        q = "INSERT INTO posts (user_id,datetime,text) VALUES ("+session['id']+",'NULL','"+santext+"')"
+        cur.execute(q)
+        conn.commit()
+        return redirect(url_for('index'))   
+    except Exception as e:
+        print(e)
+        return render_template('ERROR.html', FUCK=e)
+    finally:
+        if conn:
+            conn.close()  
+
+
 @app.route('/login_user', methods=['GET', 'POST'])
 def login_user():
     try:
@@ -181,8 +215,12 @@ def login_user():
         cur.execute(q)
         salt = str(cur.fetchone()[0])
         sub_hashed_password = hashlib.sha512(entered_pass.encode() + salt.encode()).hexdigest()
+        q = "SELECT id from users WHERE username = '"+username+"'"
+        cur.execute(q)
+        user_id = str(cur.fetchone()[0])
         if stored_pass == sub_hashed_password:
             session['username'] = username
+            session['id'] = user_id
             authorised = 1
         else:
             return render_template('login.html', logerror='Username or Password is incorrect.')
@@ -192,6 +230,8 @@ def login_user():
     finally:
         if conn:
             conn.close()
+           
+
 
 
 if __name__ == "__main__":
