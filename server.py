@@ -128,6 +128,7 @@ def account():
         name = str(cur.fetchone())
         cur.execute("SELECT email FROM users WHERE username = '%s'" % username)
         email = str(cur.fetchone())
+        conn.commit()
         return render_template('account.html', acc_username=acc_username, name=name, email=email)
     except Exception as e:
         return render_template('error.html', FUCK=e)
@@ -165,6 +166,7 @@ def password_change():
         cur.execute("UPDATE users SET password = '%s' WHERE username = '%s'" %
                     (new_hashed_password, session['username']))
         cur.execute("UPDATE users SET salt = '%s' WHERE username = '%s'" % (salt, session['username']))
+        conn.commit()
         return render_template('account.html')
     except Exception as e:
         return render_template('error.html', FUCK=e)
@@ -204,6 +206,7 @@ def password_reset():
         # BUT WHEN THEY DO IT WILL SHOULD ALL WORK
         cur.execute("UPDATE users SET password = '%s' WHERE email = '%s'" % (new_password_hashed, recipient))
         cur.execute("UPDATE users SET salt = '%s' WHERE email = '%s'" % (salt, recipient))
+        conn.commit()
         return render_template('password_reset_redirect.html', email=recipient)
     except Exception as e:
         return render_template('ERROR.html', FUCK=e)
