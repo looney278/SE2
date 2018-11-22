@@ -15,72 +15,50 @@
         {% else %}
 
         Welcome, {{ session['username'] }}
+        <a id="signup-btn" class="menu-login-btn" href="/account">Account</a>
         <a id="signup-btn" class="menu-login-btn" href="/logout">Logout</a>
         {% endif %}
     </div>
     <div class="newpost">
-        <form action="/newpost" method="POST" name="newpost">
-            <textarea name="post-text" id="psot-text" form="newpost" placeholder="Whats happening?"></textarea>
+        <form action="/new_post" method="POST" name="newpost">
+            <textarea name="text" placeholder="Whats happening?"></textarea>
             <input type="submit" class="post-submit" value="Tweet">
         </form>
 
 
     </div>
     </div>
-    <div class="posts-wrapper">
-        <div class="post">
-            <div class="post-header">
-                <div class="post-username">Test User</div>
-                <div class="post-user">@test_user</div>
-                <div class="post-date">22/10/2018</div>
-            </div>
-            <div class="post-content">
-                Bacon ipsum dolor amet meatloaf leberkas turkey salami venison cupim frankfurter spare ribs pastrami
-                shankle shoulder cow swine flank ground round. Salami venison pastrami, shoulder ground round chicken
-                capicola shank sirloin hamburger beef alcatra meatloaf picanha rump. Pork belly cow leberkas,
-                tenderloin burgdoggen shank doner. Capicola sirloin porchetta shank beef ribs burgdoggen biltong
-                sausage alcatra spare ribs prosciutto kevin jowl picanha. Landjaeger picanha flank jowl turkey pancetta
-                shoulder. Turkey jerky pork chop.
-            </div>
+    {% for post in posts %}
 
+        <div class="posts-wrapper">
+            <div class="post">
+                    <div class="post-header">
+                        <div class="post-number">#{{ post[0] }}</div>
+                        <div class="post-username">{{ post[1]}}</div>
+                        <div class="post-date">{{ post[3] }}</div>
+                    </div>
+                    <div class="post-content">
+                        {{ post[2] }}
+                    </div>
+            </div>
         </div>
-    </div>
-    <div class="posts-wrapper">
-        <div class="post">
-            <div class="post-header">
-                <div class="post-username">Test User</div>
-                <div class="post-user">@test_user</div>
-                <div class="post-date">22/10/2018</div>
-            </div>
-            <div class="post-content">
-                Bacon ipsum dolor amet meatloaf leberkas turkey salami venison cupim frankfurter spare ribs pastrami
-                shankle shoulder cow swine flank ground round. Salami venison pastrami, shoulder ground round chicken
-                capicola shank sirloin hamburger beef alcatra meatloaf picanha rump. Pork belly cow leberkas,
-                tenderloin burgdoggen shank doner. Capicola sirloin porchetta shank beef ribs burgdoggen biltong
-                sausage alcatra spare ribs prosciutto kevin jowl picanha. Landjaeger picanha flank jowl turkey pancetta
-                shoulder. Turkey jerky pork chop.
-            </div>
 
-        </div>
-    </div>
-    <div class="posts-wrapper">
-        <div class="post">
-            <div class="post-header">
-                <div class="post-username">Test User</div>
-                <div class="post-user">@test_user</div>
-                <div class="post-date">22/10/2018</div>
-            </div>
-            <div class="post-content">
-                Bacon ipsum dolor amet meatloaf leberkas turkey salami venison cupim frankfurter spare ribs pastrami
-                shankle shoulder cow swine flank ground round. Salami venison pastrami, shoulder ground round chicken
-                capicola shank sirloin hamburger beef alcatra meatloaf picanha rump. Pork belly cow leberkas,
-                tenderloin burgdoggen shank doner. Capicola sirloin porchetta shank beef ribs burgdoggen biltong
-                sausage alcatra spare ribs prosciutto kevin jowl picanha. Landjaeger picanha flank jowl turkey pancetta
-                shoulder. Turkey jerky pork chop.
-            </div>
+    {% endfor %}
 
-        </div>
-    </div>
+<table border="1">
+            {% for colName in colNames %}
+                <th> {{colName}} </th>
+            {% endfor %}
+            {% for column in columns %}
+            <tr>
+                {% for item in column%}
+                <td>
+                    {{item}}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
 </body>
 
 </html>

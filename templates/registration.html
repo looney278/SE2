@@ -16,10 +16,11 @@
                 </div>
             </div>
     <div class="reg-from-wrapper">
-        <form action="/register_user" method="post" class="reg-form">
+        <form action="register_user" method="post" class="reg-form">
 
             <div class="reg-input-group">
                 <div class="reg-form-title">Username</div><input type="text" name="username" required>
+                {{ usernameError }}
             </div>
             <div class="reg-input-group">
                 <div class="reg-form-title">First Name</div><input type="text" name="firstName" required>
@@ -42,13 +43,13 @@
                     {{passwordError}}
             </div>
 
-                    
-            
-            
-            
-            
-            
-            
+
+
+
+
+
+
+
 
             <input type="submit" value="Register" id="reg-btn">
         </form>
