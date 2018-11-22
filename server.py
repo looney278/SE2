@@ -57,7 +57,7 @@ def registration():
 
 
 # User registration
-@app.route('/register_user', methods=['GET', 'POST'])
+@app.route('/register_user', methods=['POST'])
 def register_user():
     try:
         conn = None
@@ -112,13 +112,33 @@ def register_user():
             cur.execute("INSERT INTO users VALUES '%s', '%s','%s','%s','%s','%s'" %
                         (username, firstname, lastname, email, hashed_password, salt))
             conn.commit()
-            return render_template('index.html')
+            return redirect(url_for('index'))
     except Exception as e:
         print(e)
         return render_template('error.html', FUCK=e)
     finally:
         if conn:
             conn.close()
+
+
+@app.route('/tfa_update', methods=['POST'])
+def tfa_update():
+    try:
+        conn = None
+        conn = getconn()
+        cur = conn.cursor()
+        cur.execute(search_path)
+        update = None
+        if request.form.getlist('tfa'):
+            update = str(request.form.getlist('tfa')[0])
+        if update == 'on':
+            cur.execute("UPDATE users SET tfa = TRUE WHERE username = '%s'" % session['username'])
+        else:
+            cur.execute("UPDATE users SET tfa = FALSE WHERE username = '%s'" % session['username'])
+        conn.commit()
+        return redirect(url_for('index'))
+    except Exception as e:
+        return render_template('error.html', FUCK=e)
 
 
 @app.route('/account', methods=['GET'])
@@ -128,13 +148,12 @@ def account():
         cur = conn.cursor()
         cur.execute(search_path)
         username = session["username"]
-        cur.execute("SELECT firstname, surname FROM users WHERE username = '%s'" % username)
-        acc_username = username
-        name = str(cur.fetchone())
-        cur.execute("SELECT email FROM users WHERE username = '%s'" % username)
-        email = str(cur.fetchone())
-        conn.commit()
-        return render_template('account.html', acc_username=acc_username, name=name, email=email)
+        cur.execute("SELECT firstname, surname, email, tfa FROM users WHERE username = '%s'" % username)
+        details = cur.fetchone()
+        name = str(details[0]) + " " + str(details[1])
+        email = str(details[2])
+        tfa = str(details[3])
+        return render_template('account.html', acc_username=username, name=name, email=email, user_tfa=tfa)
     except Exception as e:
         return render_template('error.html', FUCK=e)
     finally:
@@ -147,7 +166,7 @@ def change_pass():
     return render_template('password_change.html')
 
 
-@app.route('/password_change', methods=['GET', 'POST'])
+@app.route('/password_change', methods=['POST'])
 def password_change():
     try:
         conn = None
@@ -191,7 +210,7 @@ def logout():
     return redirect(url_for('index'))
 
 
-@app.route('/password_reset', methods=['GET', 'POST'])
+@app.route('/password_reset', methods=['POST'])
 def password_reset():
     try:
         conn = None
@@ -221,7 +240,7 @@ def password_reset():
             conn.close()
 
 
-@app.route('/new_post', methods=['GET', 'POST'])
+@app.route('/new_post', methods=['POST'])
 def new_post():
     try:
         conn = None
@@ -240,7 +259,7 @@ def new_post():
             conn.close()
 
 
-@app.route('/login_user', methods=['GET', 'POST'])
+@app.route('/login_user', methods=['POST'])
 def login_user():
     try:
         conn = None
@@ -259,16 +278,61 @@ def login_user():
         salt = str(cur.fetchone()[0])
         sub_hashed_password = hashlib.sha512(entered_pass.encode() + salt.encode()).hexdigest()
         if stored_pass == sub_hashed_password:
-            session['username'] = username
-            authorised = 1
+            cur.execute("SELECT tfa FROM users WHERE username = '%s'" % username)
+            tfa = bool(cur.fetchone()[0])
+            if tfa is True:
+                session['tempName'] = username
+                return redirect(url_for('two_factor_auth'))
+            else:
+                session['username'] = username
+                authorised = 1
         else:
             return render_template('login.html', logerror='Username or Password is incorrect.')
-        return render_template('index.html')
+        return redirect(url_for('index'))
     except Exception as e:
         return render_template('ERROR.html', FUCK=e)
     finally:
         if conn:
             conn.close()
+
+
+@app.route('/two_factor_auth', methods=['POST'])
+def two_factor_auth():
+    conn = None
+    conn = getconn()
+    cur = conn.cursor()
+    cur.execute(search_path)
+    tfa_code = ''.join(random.choices(string.digits, k=6))
+    cur.execute("SELECT email FROM users WHERE username = '%s'" % session['tempName'])
+    recipient = str(cur.fetchone()[0])
+    msg = Message(subject="Two Factor Authentication",
+                  sender="TestForCoursework@gmail.com",
+                  recipients=[recipient],
+                  body="Enter this code on the site: " + str(tfa_code))
+    mail.send(msg)
+    session['tempCode'] = str(tfa_code)
+    return render_template('two_factor_auth.html')
+
+
+@app.route('/auth_check', methods=['POST'])
+def auth_check():
+    try:
+        authorise_code = session['tempCode']
+        entered_code = str(request.form['entered_code'])
+        if entered_code == authorise_code:
+            session['username'] = session['tempName']
+            return redirect(url_for('index'))
+        else:
+            return render_template('two_factor_auth.html', code_error='Incorrect Code')
+    except Exception as e:
+        return render_template('ERROR.html', FUCK=e)
+
+def connection():
+    conn = None
+    conn = getconn()
+    cur = conn.cursor()
+    cur.execute(search_path)
+    return cur
 
 
 if __name__ == "__main__":

@@ -19,12 +19,13 @@
         <a id="signup-btn" class="menu-login-btn" href="/logout">Logout</a>
         {% endif %}
     </div>
+    {% if session.username %}
     <div class="newpost">
         <form action="/new_post" method="POST" name="newpost">
             <textarea name="text" placeholder="Whats happening?"></textarea>
             <input type="submit" class="post-submit" value="Tweet">
         </form>
-
+    {% endif %}
 
     </div>
     </div>

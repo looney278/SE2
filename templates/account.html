@@ -7,8 +7,8 @@
     {{ name }} <br>
     {{ email }} <br>
     <a id="signin-btn" class="menu-login-btn" href="/change_pass">Change Password</a>
-    <form action="tfa_update">
-        <input type="checkbox" name="tfa"> Enable Two Factor Authentication? <br>
+    <form action="tfa_update" method = post >
+        <input type="checkbox" name="tfa" {{'checked="checked"' if user_tfa == 'True' else ""}}/> Enable Two Factor Authentication? <br>
         <input type="submit" value="Apply"> <br>
     </form>
 
