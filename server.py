@@ -284,6 +284,10 @@ def password_reset():
         if conn:
             conn.close()
 
+@app.route('/pass_reset', methods=['GET'])
+def pass_reset():
+    return render_template('password_reset_page.html')
+
 
 # @app.route('/new_post', methods=['POST'])
 # def new_post():

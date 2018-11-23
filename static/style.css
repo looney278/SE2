@@ -149,6 +149,9 @@ button[type="submit"] {
 .password-management button[type="submit"] {
     margin-top: 20px;
 }
+.reg-from-wrapper button[type="submit"] {
+    margin-top: 20px;
+}
 .account-management {
     margin-top: 50px;
 }
@@ -171,4 +174,12 @@ button[type="submit"] {
 }
 a {
     text-decoration: none;
+}
+
+.login-form button[type="submit"] {
+margin-top: 20px;
+}
+
+.reg-input-group {
+    margin-top: 10px;
 }

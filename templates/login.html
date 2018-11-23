@@ -17,28 +17,30 @@
             <a id="signin-btn" class="menu-login-btn" href="/login">Sign in</a>
             <a id="signup-btn" class="menu-login-btn" href="/registration">Sign up</a>
         </div>
-    {% else %}
+        {% else %}
 
 
-    <div class="menu-buttons">
-        Welcome, {{ session['username'] }}
-        <a id="signup-btn" class="menu-login-btn" href="/account">Account</a>
-        <a id="signup-btn" class="menu-login-btn" href="/logout">Logout</a>
-    </div>
-    {% endif %}
+        <div class="menu-buttons">
+            Welcome, {{ session['username'] }}
+            <a id="signup-btn" class="menu-login-btn" href="/account">Account</a>
+            <a id="signup-btn" class="menu-login-btn" href="/logout">Logout</a>
+        </div>
+        {% endif %}
     </div>
     <div class="account-tile">
-        <form action="login_user" method="post">
-            <!-- Page could be incorporated into index.html -->
-            <diV class="pass-line"> Username <div class="input-wrap"><input type="text" name="username" required></div></div>
-            <diV class="pass-line">Password <div class="input-wrap"><input type="password" name="password" required></div></div>
-            {{ logerror }}
-            <button type="submit">Login</button>
-        </form>
-        <form action="password_reset" method="post">
-                <diV class="pass-line"> Email<div class="input-wrap"><input type="text" name="email" required></div></diV>
-            <button type="submit">Reset</button>
-        </form>
+        <div class="login-form">
+            <form action="login_user" method="post">
+                <!-- Page could be incorporated into index.html -->
+                <diV class="pass-line"> Username <div class="input-wrap"><input type="text" name="username" required></div>
+                </div>
+                <diV class="pass-line">Password <div class="input-wrap"><input type="password" name="password" required></div>
+                </div>
+                {{ logerror }}
+                <button type="submit">Login</button>
+
+            </form>
+        </div>
+        <a href="/pass_reset">Forgot your password?</a>
     </div>
 
 </body>
