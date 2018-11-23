@@ -137,7 +137,7 @@ def register_user():
             q = "INSERT INTO users VALUES ('"+username+"','"+firstname+"', '"+lastname+"', '"+email+"', '"+hashed_password+"', '"+salt+"')"
             cur.execute(q)
             conn.commit()
-            session['username'] = username
+            # session['username'] = username
             return redirect(url_for('index'))
     except Exception as e:
         return render_template('error.html', error_message=e)
@@ -316,12 +316,13 @@ def login_user():
         # Takes the salt stored with the user name, adds and hashes the password provided then checks it against the
         # stored password
         if username and entered_pass:
-            cur.execute("SELECT password, salt, tfa, attempts FROM users WHERE username = '%s'" % username)
+            cur.execute("SELECT password, salt, tfa, attempts, id FROM users WHERE username = '%s'" % username)
             data = cur.fetchone()
             stored_pass = str(data[0])
             salt = str(data[1])
             tfa = bool(data[2])
             attempts = int(data[3])
+            userid = str(data[4])
             if attempts < 3:
                 sub_hashed_password = hashlib.sha512(entered_pass.encode() + salt.encode()).hexdigest()
                 if stored_pass == sub_hashed_password:
@@ -332,6 +333,7 @@ def login_user():
                         return redirect(url_for('two_factor_auth'))
                     else:
                         session['username'] = username
+                        session['id'] = userid
                 else:
                     cur.execute("UPDATE users SET attempts = attempts + 1 WHERE username = '%s'" % username)
                     conn.commit()
