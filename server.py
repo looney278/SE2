@@ -222,56 +222,6 @@ def password_change():
         if conn:
             conn.close()
 
-
-@app.route('/account', methods=['GET'])
-def account():
-    conn = None
-    conn = getconn()
-    cur = conn.cursor()
-    cur.execute(search_path)
-    username = session["username"]
-    cur.execute('SELECT firstname, surname FROM users WHERE username = (%s)', (username,))
-    acc_username = username
-    name = str(cur.fetchone())
-    cur.execute('SELECT email FROM users WHERE username = (%s)', (username,))
-    email = str(cur.fetchone())
-    return render_template('account.html', acc_username=acc_username, name=name, email=email)
-
-
-@app.route('/change_pass')
-def change_pass():
-    return render_template('password_change.html')
-
-
-@app.route('/password_change', methods=['GET', 'POST'])
-def password_change():
-    try:
-        conn = getconn()
-        cur = conn.cursor()
-        cur.execute(search_path)
-        cur.execute('SELECT password FROM users WHERE username = (%s)', (session['username'],))
-        correct_old_pass = str(cur.fetchone()[0])
-        entered_old_pass = request.form['old_pass']
-        new_pass = request.form['new_pass']
-        conf_new_pass = request.form['conf_new_pass']
-        if new_pass is not conf_new_pass:
-            render_template('password_change.html', pass_error="New passwords must match")
-        cur.execute('SELECT salt FROM users WHERE username = (%s)', (session['username'],))
-        salt = str(cur.fetchone()[0])
-        hashed_password = hashlib.sha512(entered_old_pass.encode() + salt.encode()).hexdigest()
-        if hashed_password != correct_old_pass:
-            return render_template('password_change.html', pass_error="incorrect password")
-
-        new_hashed_password = hashlib.sha512(new_pass.encode() + salt.encode()).hexdigest()
-        cur.execute('UPDATE users SET password = (%s) WHERE username = (%s)',
-                    (new_hashed_password, session['username'],))
-        return render_template('account.html')
-    except Exception as e:
-        return render_template('error.html', FUCK=e)
-    finally:
-        if conn:
-            conn.close()
-
 @app.route('/login')
 def login():
     return render_template('login.html')
@@ -306,6 +256,11 @@ def newpost():
 
 @app.route('/password_reset', methods=['POST'])
 def password_reset():
+    try:
+        conn = None
+        conn = getconn()
+        cur = conn.cursor()
+        cur.execute(search_path)
         new_password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
         recipient = str(request.form['email'])
         if recipient:
