@@ -6,18 +6,21 @@
 
 <body>
     <div class='mainmenu'>
-        <div class="website-name">AlmosT witter</div>
+            <a href="/"><div class="website-name">Norfolk Music</div></a>
         {% if not session.username %}
         <a class="menu-buttons">
             <a id="signin-btn" class="menu-login-btn" href="/login">Sign in</a>
             <a id="signup-btn" class="menu-login-btn" href="/registration">Sign up</a>
-        </div>
-        {% else %}
+    </div>
+    {% else %}
 
+
+    <div class="menu-buttons">
         Welcome, {{ session['username'] }}
         <a id="signup-btn" class="menu-login-btn" href="/account">Account</a>
         <a id="signup-btn" class="menu-login-btn" href="/logout">Logout</a>
-        {% endif %}
+    </div>
+    {% endif %}
     </div>
     {{ error }}
     {% if session.username %}
@@ -26,11 +29,10 @@
             <textarea name="post-text" id="psot-text" placeholder="Whats happening?"></textarea>
             <input type="submit" class="post-submit" value="Tweet">
         </form>
-    {% endif %}
+        {% endif %}
 
     </div>
     </div>
-
     {% for post in posts %}
     <div class="posts-wrapper">
         <div class="post">

@@ -172,7 +172,7 @@ def account():
         cur = conn.cursor()
         cur.execute(search_path)
         username = session["username"]
-        cur.execute("SELECT firstname, surname, email, tfa FROM users WHERE username = '%s'" % username)
+        cur.execute("SELECT firstname, lastname, email, tfa FROM users WHERE username = '%s'" % username)
         details = cur.fetchone()
         name = str(details[0]) + " " + str(details[1])
         email = str(details[2])
