@@ -6,8 +6,12 @@
     {{ acc_username }} <br>
     {{ name }} <br>
     {{ email }} <br>
-    <input type="checkbox" name="2FA" value="2FA"> Enable Two Factor Authentication? <br>
     <a id="signin-btn" class="menu-login-btn" href="/change_pass">Change Password</a>
+    <form action="tfa_update" method = post >
+        <input type="checkbox" name="tfa" {{'checked="checked"' if user_tfa == 'True' else ""}}/> Enable Two Factor Authentication? <br>
+        <input type="submit" value="Apply"> <br>
+    </form>
+
 </head>
 <body>
 

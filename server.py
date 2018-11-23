@@ -1,19 +1,37 @@
-from flask import Flask, session, redirect, url_for, escape, request, render_template
+from flask import Flask, session, redirect, url_for, request, render_template
+from flask_mail import Mail, Message
 import psycopg2
 import re
 import hashlib
 import uuid
+import random
+import string
 from datetime import datetime
+# Please don't judge my spaghetti code :(
 
 # RegEx for email.
-emailpattern = re.compile("^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
+email_pattern = re.compile("^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
 # RegEx for password 6-15 characters, 1 number, 1 letter.
-passpattern = re.compile("(?!^[0-9]*$)(?!^[a-zA-Z]*$)^([a-zA-Z0-9]{6,15})$")
+pass_pattern = re.compile("(?!^[0-9]*$)(?!^[a-zA-Z]*$)^([a-zA-Z0-9]{6,15})$")
 # RegEx for username 3-20 characters
-userpattern = re.compile("^(?=.{6,20}$)[A-Za-z0-9]+(?:[ _-][A-Za-z0-9]+)*$")
+user_pattern = re.compile("^(?=.{6,20}$)[A-Za-z0-9]+(?:[ _-][A-Za-z0-9]+)*$")
 
+mail_settings = {
+    "MAIL_SERVER": 'smtp.gmail.com',
+    "MAIL_PORT": 465,
+    "MAIL_USE_TLS": False,
+    "MAIL_USE_SSL": True,
+    "MAIL_USERNAME": 'TestForCoursework@gmail.com',
+    "MAIL_PASSWORD": 'Potato555'
+}
 app = Flask(__name__)
-app.secret_key = 'mSMKW@Oa^8ingejvKj_<8Je1;_|Y&]n,J<^EK@!pupC=Mg.$;Df?q|`}a|FF_'
+
+app.config.update(mail_settings)
+mail = Mail(app)
+
+app.secret_key = 'mSMKW@Oa^8ingejvKj_<8Je1;_|Y&]n,J<^EK@!pupC=Mg.$;Df?query|`}a|FF_'
+
+search_path = 'SET search_path TO assignment'
 
 search_path = 'SET search_path TO assignment'
 
@@ -63,7 +81,7 @@ def registration():
 
 
 # User registration
-@app.route('/register_user', methods=['GET', 'POST'])
+@app.route('/register_user', methods=['POST'])
 def register_user():
     try:
         conn = None
@@ -77,14 +95,14 @@ def register_user():
         confpassword = request.form['confPassword']
 
         # checks all RegEx matches
-        if not emailpattern.match(email):
+        if not email_pattern.match(email):
             return render_template('registration.html', emailError='Please use a valid email.')
         elif not email == confemail:
             return render_template('registration.html', emailError='Please ensure emails match.')
-        elif not passpattern.match(password):
+        elif not pass_pattern.match(password):
             return render_template('registration.html', passwordError='Password much contain at least 1 letter, '
                                                                       '1 number and be between 6-15 characters long')
-        elif not userpattern.match(username):
+        elif not user_pattern.match(username):
             return render_template('registration.html', usernameError='Username must be between 3-20 characters, '
                                                                       'consist of alphanumerics, -, _ and spaces.'
                                                                       'No more than 2 -, _ or spaces consecutively')
@@ -119,10 +137,87 @@ def register_user():
             q = "INSERT INTO users VALUES ('"+username+"','"+firstname+"', '"+lastname+"', '"+email+"', '"+hashed_password+"', '"+salt+"')"
             cur.execute(q)
             conn.commit()
-            return render_template('index.html')
+            session['username'] = username
+            return redirect(url_for('index'))
     except Exception as e:
-        print(e)
-        return render_template('error.html', FUCK=e)
+        return render_template('error.html', error_message=e)
+    finally:
+        if conn:
+            conn.close()
+
+
+@app.route('/tfa_update', methods=['POST'])
+def tfa_update():
+    try:
+        conn = getconn()
+        cur = conn.cursor()
+        cur.execute(search_path)
+        update = None
+        if request.form.getlist('tfa'):
+            update = str(request.form.getlist('tfa')[0])
+        if update == 'on':
+            cur.execute("UPDATE users SET tfa = TRUE WHERE username = '%s'" % session['username'])
+        else:
+            cur.execute("UPDATE users SET tfa = FALSE WHERE username = '%s'" % session['username'])
+        conn.commit()
+        return redirect(url_for('index'))
+    except Exception as e:
+        return render_template('error.html', error_message=e)
+
+
+@app.route('/account', methods=['GET'])
+def account():
+    try:
+        conn = getconn()
+        cur = conn.cursor()
+        cur.execute(search_path)
+        username = session["username"]
+        cur.execute("SELECT firstname, surname, email, tfa FROM users WHERE username = '%s'" % username)
+        details = cur.fetchone()
+        name = str(details[0]) + " " + str(details[1])
+        email = str(details[2])
+        tfa = str(details[3])
+        return render_template('account.html', acc_username=username, name=name, email=email, user_tfa=tfa)
+    except Exception as e:
+        return render_template('error.html', error_message=e)
+    finally:
+        if conn:
+            conn.close()
+
+
+@app.route('/change_pass')
+def change_pass():
+    return render_template('password_change.html')
+
+
+@app.route('/password_change', methods=['POST'])
+def password_change():
+    try:
+        conn = None
+        conn = getconn()
+        cur = conn.cursor()
+        cur.execute(search_path)
+        cur.execute("SELECT password FROM users WHERE username = '%s'" % session['username'])
+        correct_old_pass = str(cur.fetchone()[0])
+        entered_old_pass = request.form['old_pass']
+        new_pass = request.form['new_pass']
+        conf_new_pass = request.form['conf_new_pass']
+        if new_pass is not conf_new_pass:
+            render_template('password_change.html', pass_error="New passwords must match")
+        cur.execute("SELECT salt FROM users WHERE username = '%s'" % session['username'])
+        salt = str(cur.fetchone()[0])
+        hashed_password = hashlib.sha512(entered_old_pass.encode() + salt.encode()).hexdigest()
+        if hashed_password != correct_old_pass:
+            return render_template('password_change.html', pass_error="incorrect password")
+        salt = uuid.uuid4().hex
+        new_hashed_password = hashlib.sha512(new_pass.encode() + salt.encode()).hexdigest()
+        cur.execute("UPDATE users SET password = '%s' WHERE username = '%s'" %
+                    (new_hashed_password, session['username']))
+        cur.execute("UPDATE users SET salt = '%s' WHERE username = '%s'" % (salt, session['username']))
+        conn.commit()
+        return redirect(url_for('account'))
+    except Exception as e:
+        return render_template('error.html', error_message=e)
     finally:
         if conn:
             conn.close()
@@ -209,8 +304,52 @@ def newpost():
         if conn:
             conn.close()  
 
+@app.route('/password_reset', methods=['POST'])
+def password_reset():
+        new_password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+        recipient = str(request.form['email'])
+        if recipient:
+            msg = Message(subject="Password Reset",
+                          sender="TestForCoursework@gmail.com",
+                          recipients=[recipient],
+                          body="New password : " + str(new_password))
+            mail.send(msg)
+            salt = uuid.uuid4().hex
+            new_password_hashed = hashlib.sha512(new_password.encode() + salt.encode()).hexdigest()
+            cur.execute("UPDATE users SET password = '%s' WHERE email = '%s'" % (new_password_hashed, recipient))
+            cur.execute("UPDATE users SET salt = '%s' WHERE email = '%s'" % (salt, recipient))
+            conn.commit()
+            return render_template('password_reset_redirect.html', email=recipient)
+        else:
+            return render_template('login.html', logerror='Invalid email')
+    except Exception as e:
+        return render_template('error.html', error_message=e)
 
-@app.route('/login_user', methods=['GET', 'POST'])
+    finally:
+        if conn:
+            conn.close()
+
+
+# @app.route('/new_post', methods=['POST'])
+# def new_post():
+#     try:
+#         conn = None
+#         conn = getconn()
+#         cur = conn.cursor()
+#         cur.execute(search_path)
+#         contents = request.form['text']
+
+#         cur.execute("INSERT INTO posts(username, content) VALUES ('%s', '%s')" % (session['username'], contents))
+#         conn.commit()
+#         return redirect(url_for('index'))
+#     except Exception as e:
+#         return render_template('error.html', error_message=e)
+#     finally:
+#         if conn:
+#             conn.close()
+
+
+@app.route('/login_user', methods=['POST'])
 def login_user():
     try:
         conn = None
@@ -221,32 +360,80 @@ def login_user():
         cur.execute(search_path)
         # Takes the salt stored with the user name, adds and hashes the password provided then checks it against the
         # stored password
-        #cur.execute("SELECT password FROM users WHERE username = (%s);", (username,))
-        q = "SELECT password FROM users WHERE username = '"+username+"'"
-        cur.execute(q)
-        stored_pass = str(cur.fetchone()[0])
-        #cur.execute("SELECT salt FROM users WHERE username = (%s);", (username,))
-        q = "SELECT salt FROM users WHERE username = '"+username+"'"
-        cur.execute(q)
-        salt = str(cur.fetchone()[0])
-        sub_hashed_password = hashlib.sha512(entered_pass.encode() + salt.encode()).hexdigest()
-        q = "SELECT id from users WHERE username = '"+username+"'"
-        cur.execute(q)
-        user_id = str(cur.fetchone()[0])
-        if stored_pass == sub_hashed_password:
-            session['username'] = username
-            session['id'] = user_id
-            authorised = 1
+        if username and entered_pass:
+            cur.execute("SELECT password, salt, tfa, attempts FROM users WHERE username = '%s'" % username)
+            data = cur.fetchone()
+            stored_pass = str(data[0])
+            salt = str(data[1])
+            tfa = bool(data[2])
+            attempts = int(data[3])
+            if attempts < 3:
+                sub_hashed_password = hashlib.sha512(entered_pass.encode() + salt.encode()).hexdigest()
+                if stored_pass == sub_hashed_password:
+                    cur.execute("UPDATE users SET attempts = 0 WHERE username = '%s'" % username)
+                    conn.commit()
+                    if tfa is True:
+                        session['tempName'] = username
+                        return redirect(url_for('two_factor_auth'))
+                    else:
+                        session['username'] = username
+                else:
+                    cur.execute("UPDATE users SET attempts = attempts + 1 WHERE username = '%s'" % username)
+                    conn.commit()
+                    return render_template('login.html', logerror='Invalid username or password')
+                return redirect(url_for('index'))
+            else:
+                return render_template('login.html', logerror='Account Locked Contact Administrator')
         else:
-            return render_template('login.html', logerror='Username or Password is incorrect.')
-        return render_template('index.html')
+            return render_template('login.html', logerror='Invalid username or password')
     except Exception as e:
-        return render_template('ERROR.html', FUCK=e)
+        return render_template('error.html', error_message=e)
     finally:
         if conn:
             conn.close()
            
 
+
+
+@app.route('/two_factor_auth', methods=['GET'])
+def two_factor_auth():
+    try:
+        conn = getconn()
+        cur = conn.cursor()
+        cur.execute(search_path)
+        tfa_code = ''.join(random.choices(string.digits, k=6))
+        cur.execute("SELECT email FROM users WHERE username = '%s'" % session['tempName'])
+        recipient = str(cur.fetchone()[0])
+        msg = Message(subject="Two Factor Authentication",
+                      sender="TestForCoursework@gmail.com",
+                      recipients=[recipient],
+                      body="Enter this code on the site: " + str(tfa_code))
+        mail.send(msg)
+        session['tempCode'] = str(tfa_code)
+        return render_template('two_factor_auth.html')
+    except Exception as e:
+        return render_template('error.html', error_message=e)
+
+
+@app.route('/auth_check', methods=['POST'])
+def auth_check():
+    try:
+        authorise_code = session['tempCode']
+        entered_code = str(request.form['entered_code'])
+        if entered_code == authorise_code:
+            session['username'] = session['tempName']
+            return redirect(url_for('index'))
+        else:
+            return render_template('two_factor_auth.html', code_error='Incorrect Code')
+    except Exception as e:
+        return render_template('error.html', error_message=e)
+
+
+def connection():
+    conn = getconn()
+    cur = conn.cursor()
+    cur.execute(search_path)
+    return cur
 
 
 if __name__ == "__main__":

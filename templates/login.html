@@ -8,11 +8,16 @@
 
     <form action = "login_user" method = "post" >
         <!-- Page could be incorporated into index.html -->
-        Username <input type = "text" name = "username" ><br>
-        Password <input type = "password" name = "password" ><br>
+        Username <input type = "text" name = "username" required><br>
+        Password <input type = "password" name = "password" required><br>
         {{ logerror }}
         <input type = "submit" value = "Login" >
     </form>
+    <form action = "password_reset" method="post" >
+        Email <input type="text" name = "email" required><br>
+        <input type = "submit" value ="Reset Password">
+    </form>
+
 
 </body>
 </html>
