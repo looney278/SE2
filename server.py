@@ -6,7 +6,7 @@ import hashlib
 import uuid
 import random
 import string
-
+from datetime import datetime
 # Please don't judge my spaghetti code :(
 
 # RegEx for email.
@@ -33,6 +33,20 @@ app.secret_key = 'mSMKW@Oa^8ingejvKj_<8Je1;_|Y&]n,J<^EK@!pupC=Mg.$;Df?query|`}a|
 
 search_path = 'SET search_path TO assignment'
 
+search_path = 'SET search_path TO assignment'
+
+
+
+#some sql injection protection to be used in user posts
+def encodeText(text):
+    newstr = text.replace(";","%$MSVZO") #replacing semicolon
+    newstr = newstr.replace("--","%$6SVA1") #replacing --
+    return newstr
+
+def decodeText(text):
+    newstr = text.replace("%$MSVZO",";")
+    newstr = newstr.replace("%$6SVA1","--")
+    return newstr
 
 # creates initial connection to the database
 def getconn():
@@ -45,12 +59,20 @@ def getconn():
 @app.route('/index')
 def index():
     conn = None
+
+    q="select * from user_posts"
     conn = getconn()
     cur = conn.cursor()
     cur.execute(search_path)
-    cur.execute("SELECT * FROM posts")
+    cur.execute(q)
     posts = cur.fetchall()
-    return render_template('index.html', posts=posts)
+    decodedPosts = []
+    for post in posts:
+        #post[5] = decodeText(post[5])
+        decodedText = decodeText(post[5])
+        newarr = [post[0],post[1],post[2],post[3],post[4],decodedText]  
+        decodedPosts.append(newarr)
+    return render_template('index.html', posts=decodedPosts)
 
 
 @app.route('/registration')
@@ -92,15 +114,16 @@ def register_user():
             cur.execute(search_path)
 
             # duplicate username check
-            # cur.execute("SELECT username FROM users where username = (%s)", (username,))
-            cur.execute("SELECT username FROM users where username = '%s'" % username)
+            #cur.execute("SELECT username FROM users where username = (%s)", (username,))
+            q = "SELECT username FROM users where username = '"+username+"'"
+            cur.execute(q)
             if cur.fetchone() is not None:
                 return render_template('registration.html', usernameError='Username already exists')
 
             # duplicate email check
-            # cur.execute("SELECT email FROM users where email = (%s)", (email,))
-            cur.execute("SELECT email FROM users where email = '%s'" % email)
-
+            #cur.execute("SELECT email FROM users where email = (%s)", (email,))
+            q = "SELECT email FROM users where email = '"+email+"'"
+            cur.execute(q)
             if cur.fetchone() is not None:
                 return render_template('registration.html', emailError='Email already registered')
 
@@ -108,11 +131,11 @@ def register_user():
             salt = uuid.uuid4().hex
             hashed_password = hashlib.sha512(password.encode() + salt.encode()).hexdigest()
 
-            # cur.execute("INSERT INTO users VALUES (%s, %s, %s, %s, %s, %s)", \
-            #           [username, firstname, lastname, email, hashed_password, salt])
+            #cur.execute("INSERT INTO users VALUES (%s, %s, %s, %s, %s, %s)", \
+             #           [username, firstname, lastname, email, hashed_password, salt])
 
-            cur.execute("INSERT INTO users VALUES ('%s', '%s','%s','%s','%s','%s',DEFAULT,'0')" %
-                        (username, firstname, lastname, email, hashed_password, salt))
+            q = "INSERT INTO users VALUES ('"+username+"','"+firstname+"', '"+lastname+"', '"+email+"', '"+hashed_password+"', '"+salt+"')"
+            cur.execute(q)
             conn.commit()
             session['username'] = username
             return redirect(url_for('index'))
@@ -199,7 +222,6 @@ def password_change():
         if conn:
             conn.close()
 
-
 @app.route('/login')
 def login():
     return render_template('login.html')
@@ -210,6 +232,27 @@ def logout():
     session.pop('username', None)
     return redirect(url_for('index'))
 
+
+@app.route('/newpost', methods=['POST']) 
+def newpost(): 
+    try:
+        conn = None
+        conn = getconn()
+        cur = conn.cursor()
+        cur.execute(search_path)
+        text = request.form['post-text']
+        santext = encodeText(text)
+        dt = str(datetime.now().strftime('%d-%b-%Y %H:%M:%S '))
+        q = "INSERT INTO posts (user_id,datetime,text) VALUES ("+session['id']+",'"+dt+"','"+santext+"')"
+        cur.execute(q)
+        conn.commit()
+        return redirect(url_for('index'))  
+    except Exception as e:
+        print(e)
+        return redirect(url_for('index'))  
+    finally:
+        if conn:
+            conn.close()  
 
 @app.route('/password_reset', methods=['POST'])
 def password_reset():
@@ -242,23 +285,23 @@ def password_reset():
             conn.close()
 
 
-@app.route('/new_post', methods=['POST'])
-def new_post():
-    try:
-        conn = None
-        conn = getconn()
-        cur = conn.cursor()
-        cur.execute(search_path)
-        contents = request.form['text']
+# @app.route('/new_post', methods=['POST'])
+# def new_post():
+#     try:
+#         conn = None
+#         conn = getconn()
+#         cur = conn.cursor()
+#         cur.execute(search_path)
+#         contents = request.form['text']
 
-        cur.execute("INSERT INTO posts(username, content) VALUES ('%s', '%s')" % (session['username'], contents))
-        conn.commit()
-        return redirect(url_for('index'))
-    except Exception as e:
-        return render_template('error.html', error_message=e)
-    finally:
-        if conn:
-            conn.close()
+#         cur.execute("INSERT INTO posts(username, content) VALUES ('%s', '%s')" % (session['username'], contents))
+#         conn.commit()
+#         return redirect(url_for('index'))
+#     except Exception as e:
+#         return render_template('error.html', error_message=e)
+#     finally:
+#         if conn:
+#             conn.close()
 
 
 @app.route('/login_user', methods=['POST'])
@@ -303,6 +346,8 @@ def login_user():
     finally:
         if conn:
             conn.close()
+           
+
 
 
 @app.route('/two_factor_auth', methods=['GET'])
