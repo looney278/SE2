@@ -19,7 +19,7 @@
 
 
     <div class="menu-buttons">
-        Welcome, {{ session['username'] }}
+        Welcome, {{ session['username']|safe  }}
         <a id="signup-btn" class="menu-login-btn" href="/account">Account</a>
         <a id="signup-btn" class="menu-login-btn" href="/logout">Logout</a>
     </div>
@@ -28,9 +28,9 @@
 
     <div class="account-tile">
         <div class="account-title">Your Account</div>
-        <div class="account-line">Username: {{ acc_username }}</div>
-        <div class="account-line">Name: {{ name }}</div>
-        <div class="account-line">Email: {{ email }}</div>
+        <div class="account-line">Username: {{ acc_username|safe  }}</div>
+        <div class="account-line">Name: {{ name|safe  }}</div>
+        <div class="account-line">Email: {{ email|safe }}</div>
 
         <div class="account-management">
             <a href="/change_pass">

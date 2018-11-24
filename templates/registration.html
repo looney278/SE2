@@ -10,7 +10,7 @@
 
 <body>
     <div class='mainmenu'>
-        <div class="website-name">AlmosT witter</div>
+        <div class="website-name">Norfolk Music</div>
         <a class="menu-buttons">
             <a id="signin-btn" class="menu-login-btn" href="/login">Sign in</a>
     </div>
@@ -21,7 +21,7 @@
 
                 <div class="reg-input-group">
                     <div class="reg-form-title">Username</div><input type="text" name="username" required>
-                    {{ usernameError }}
+                    {{ usernameError|safe  }}
                 </div>
                 <div class="reg-input-group">
                     <div class="reg-form-title">First Name</div><input type="text" name="firstName" required>
@@ -34,7 +34,7 @@
                 </div>
                 <div class="reg-input-group">
                     <div class="reg-form-title">Confirm Email</div><input type="text" name="confEmail" required>
-                    {{emailError}}
+                    {{emailError|safe }}
                 </div>
                 <div class="reg-input-group">
                     <div class="reg-form-title">Password</div><input type="password" name="password" required>
@@ -42,7 +42,7 @@
                 <div class="reg-input-group">
                     <div class="reg-form-title">Confirm Password</div><input type="password" name="confPassword"
                         required>
-                    {{passwordError}}
+                    {{passwordError|safe }}
                 </div>
 
                 <button type="submit">Register</button>

@@ -5,7 +5,7 @@
     <title>Title</title>
         <form action = "/auth_check" method="post">
         Enter Code: <input type = "text" name = "entered_code" ><br>
-        {{ code_error }}
+        {{ code_error|safe  }}
         <input type = "submit" value = "Enter Code" >
     </form>
 </head>

@@ -12,9 +12,9 @@ from datetime import datetime
 # RegEx for email.
 email_pattern = re.compile("^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
 # RegEx for password 6-15 characters, 1 number, 1 letter.
-pass_pattern = re.compile("(?!^[0-9]*$)(?!^[a-zA-Z]*$)^([a-zA-Z0-9]{6,15})$")
+pass_pattern = re.compile("(?!^[0-9]*$)(?!^[a-zA-Z]*$)^([a-zA-Z0-9]{6,255})$")
 # RegEx for username 3-20 characters
-user_pattern = re.compile("^(?=.{6,20}$)[A-Za-z0-9]+(?:[ _-][A-Za-z0-9]+)*$")
+user_pattern = re.compile("^(?=.{3,20}$)[A-Za-z0-9]+(?:[ _-][A-Za-z0-9]+)*$")
 
 mail_settings = {
     "MAIL_SERVER": 'smtp.gmail.com',
@@ -41,12 +41,15 @@ search_path = 'SET search_path TO assignment'
 def encodeText(text):
     newstr = text.replace(";","%$MSVZO") #replacing semicolon
     newstr = newstr.replace("--","%$6SVA1") #replacing --
+    newstr = newstr.replace("'","%$9XVAQ") #replacing '
     return newstr
 
 def decodeText(text):
     newstr = text.replace("%$MSVZO",";")
     newstr = newstr.replace("%$6SVA1","--")
+    newstr = newstr.replace("%$9XVAQ","'")
     return newstr
+
 
 # creates initial connection to the database
 def getconn():
