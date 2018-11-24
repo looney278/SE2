@@ -25,9 +25,11 @@
                 </div>
                 <div class="reg-input-group">
                     <div class="reg-form-title">First Name</div><input type="text" name="firstName" required>
+                    {{nameError|safe}}
                 </div>
                 <div class="reg-input-group">
                     <div class="reg-form-title">Last Name</div><input type="text" name="lastName" required>
+                    {{nameError|safe}}
                 </div>
                 <div class="reg-input-group">
                     <div class="reg-form-title">Email</div><input type="text" name="email" required>

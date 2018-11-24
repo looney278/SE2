@@ -15,6 +15,8 @@ email_pattern = re.compile("^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
 pass_pattern = re.compile("(?!^[0-9]*$)(?!^[a-zA-Z]*$)^([a-zA-Z0-9]{6,255})$")
 # RegEx for username 3-20 characters
 user_pattern = re.compile("^(?=.{3,20}$)[A-Za-z0-9]+(?:[ _-][A-Za-z0-9]+)*$")
+#RegEx for First and Second name
+name_pattern = re.compile("^[A-Za-z]+$") 
 
 mail_settings = {
     "MAIL_SERVER": 'smtp.gmail.com',
@@ -50,6 +52,10 @@ def decodeText(text):
     newstr = newstr.replace("%$9XVAQ","'")
     return newstr
 
+def sanitiseHTML(text):
+    sanhtml = text.replace("<","&lt;")
+    sanhtml = sanhtml.replace(">","&gt;")
+    return sanhtml
 
 # creates initial connection to the database
 def getconn():
@@ -103,12 +109,15 @@ def register_user():
         elif not email == confemail:
             return render_template('registration.html', emailError='Please ensure emails match.')
         elif not pass_pattern.match(password):
-            return render_template('registration.html', passwordError='Password much contain at least 1 letter, '
-                                                                      '1 number and be between 6-15 characters long')
+            return render_template('registration.html', passwordError='Password much contain at least 1 letter, '                                                                      '1 number and be between 6-15 characters long')
         elif not user_pattern.match(username):
             return render_template('registration.html', usernameError='Username must be between 3-20 characters, '
                                                                       'consist of alphanumerics, -, _ and spaces.'
                                                                       'No more than 2 -, _ or spaces consecutively')
+        elif not name_pattern.match(firstname): 
+            return render_template('registration.html', nameError='Name should use English alphabet characters only')    
+        elif not name_pattern.match(lastname): 
+            return render_template('registration.html', nameError='Name should use English alphabet characters only')                                                           
         elif not password == confpassword:
             return render_template('registration.html', passwordError='Please ensure passwords match.')
         else:
@@ -244,7 +253,8 @@ def newpost():
         cur = conn.cursor()
         cur.execute(search_path)
         text = request.form['post-text']
-        santext = encodeText(text)
+        sanhtml = sanitiseHTML(text) 
+        santext = encodeText(sanhtml)
         dt = str(datetime.now().strftime('%d-%b-%Y %H:%M:%S '))
         q = "INSERT INTO posts (user_id,datetime,text) VALUES ("+session['id']+",'"+dt+"','"+santext+"')"
         cur.execute(q)
@@ -392,6 +402,12 @@ def auth_check():
     except Exception as e:
         return render_template('error.html', error_message=e)
 
+
+@app.after_request
+def apply_caching(response):
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers['Content-Security-Policy'] = "default-src 'self'"
+    return response
 
 def connection():
     conn = getconn()
