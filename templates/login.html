@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8">
+    <title>Login</title>
+</head>
+
+<body>
+    <div class='mainmenu'>
+        <a href="/">
+            <div class="website-name">Norfolk Music</div>
+        </a>
+        {% if not session.username %}
+        <div class="menu-buttons">
+            <a id="signin-btn" class="menu-login-btn" href="/login">Sign in</a>
+            <a id="signup-btn" class="menu-login-btn" href="/registration">Sign up</a>
+        </div>
+        {% else %}
+
+
+        <div class="menu-buttons">
+            Welcome, {{ session['username'] }}
+            <a id="signup-btn" class="menu-login-btn" href="/account">Account</a>
+            <a id="signup-btn" class="menu-login-btn" href="/logout">Logout</a>
+        </div>
+        {% endif %}
+    </div>
+    <div class="account-tile">
+        <div class="login-form">
+            <form action="login_user" method="post">
+                <!-- Page could be incorporated into index.html -->
+                <diV class="pass-line"> Username <div class="input-wrap"><input type="text" name="username" required></div>
+                </div>
+                <diV class="pass-line">Password <div class="input-wrap"><input type="password" name="password" required></div>
+                </div>
+                {{ logerror }}
+                <button type="submit">Login</button>
+
+            </form>
+        </div>
+        <a href="/pass_reset">Forgot your password?</a>*
+    </div>
+
+</body>
+
+</html>

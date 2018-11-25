@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+    <div class='mainmenu'>
+            <a href="/"><div class="website-name">Norfolk Music</div></a>
+        {% if not session.username %}
+        <a class="menu-buttons">
+            <a id="signin-btn" class="menu-login-btn" href="/login">Sign in</a>
+            <a id="signup-btn" class="menu-login-btn" href="/registration">Sign up</a>
+    </div>
+    {% else %}
+
+
+    <div class="menu-buttons">
+        Welcome, {{ session['username']|safe  }}
+        <a id="signup-btn" class="menu-login-btn" href="/account">Account</a>
+        <a id="signup-btn" class="menu-login-btn" href="/logout">Logout</a>
+    </div>
+    {% endif %}
+    </div>
+
+    <div class="account-tile">
+        <div class="account-title">Your Account</div>
+        <div class="account-line">Username: {{ acc_username|safe  }}</div>
+        <div class="account-line">Name: {{ name|safe  }}</div>
+        <div class="account-line">Email: {{ email|safe }}</div>
+
+        <div class="account-management">
+            <a href="/change_pass">
+                <div class="change-pass-btn">Change Password</div>
+            </a>
+            <div class="change-pass-form">
+                <form action="tfa_update" method=post>
+                    <input type="checkbox" name="tfa" {{'checked="checked"' if user_tfa == 'True' else ""}} /> Enable
+                    Two Factor Authentication?
+                    <button type="submit" id="submit-2fa">Proceed</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

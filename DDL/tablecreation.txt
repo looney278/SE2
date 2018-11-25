@@ -1,0 +1,24 @@
+CREATE SCHEMA assignment;
+SET search_path to assignment,public;
+
+CREATE TABLE Users
+(
+	Username VARCHAR(20) NOT NULL UNIQUE,
+	FirstName VARCHAR(20)  NOT NULL,
+	Surname VARCHAR(40)  NOT NULL,
+	Email VARCHAR(40) NOT NULL,
+	Password VARCHAR(512) NOT NULL,
+	Salt VARCHAR(512) NOT NULL,
+	Tfa BOOLEAN NOT NULL DEFAULT FALSE,
+	attempts INT NOT NULL,
+	PRIMARY KEY(Username)
+);
+
+CREATE TABLE Posts
+(
+	ID SERIAL NOT NULL,
+	Username VARCHAR(20) NOT NULL,
+	Content VARCHAR(512) NOT NULL,
+	Time TIMESTAMP default current_timestamp NOT NULL,
+	PRIMARY KEY(ID)
+);

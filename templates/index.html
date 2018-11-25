@@ -1,0 +1,53 @@
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class='mainmenu'>
+            <a href="/"><div class="website-name">Norfolk Music</div></a>
+        {% if not session.username %}
+        <a class="menu-buttons">
+            <a id="signin-btn" class="menu-login-btn" href="/login">Sign in</a>
+            <a id="signup-btn" class="menu-login-btn" href="/registration">Sign up</a>
+    </div>
+    {% else %}
+
+
+    <div class="menu-buttons">
+        Welcome, {{ session['username']|safe  }}
+        <a id="signup-btn" class="menu-login-btn" href="/account">Account</a>
+        <a id="signup-btn" class="menu-login-btn" href="/logout">Logout</a>
+    </div>
+    {% endif %}
+    </div>
+    {{ error|safe  }}
+    {% if session.username %}
+    <div class="newpost">
+        <form action="/newpost" method="POST" name="newpost">
+            <textarea name="post-text" id="psot-text" placeholder="Whats happening?"></textarea>
+            <input type="submit" class="post-submit" value="Tweet">
+        </form>
+        {% endif %}
+
+    </div>
+    </div>
+    {% for post in posts %}
+    <div class="posts-wrapper">
+        <div class="post">
+            <div class="post-header">
+                <div class="post-username">{{ post[2]|safe  }} {{ post[3]|safe  }}</div>
+                <div class="post-user">@{{ post[1]|safe  }}</div>
+                <div class="post-date">{{ post[4]|safe  }}</div>
+            </div>
+            <div class="post-content">
+                {{ post[5]|safe  }}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+</body>
+
+</html>
