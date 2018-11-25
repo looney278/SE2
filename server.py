@@ -1,4 +1,4 @@
-from flask import Flask, session, redirect, url_for, request, render_template
+from flask import Flask, session, redirect, url_for, request, render_template, flash
 from flask_mail import Mail, Message
 import psycopg2
 import re
@@ -150,8 +150,8 @@ def register_user():
             conn.commit()
             return redirect(url_for('index'))
     except Exception as e:
-        print(e)
-        return redirect(url_for('index'), error='An error has occurred')
+        flash('An error has occurred')
+        return redirect(url_for('index'))
     finally:
         if conn:
             conn.close()
@@ -175,7 +175,8 @@ def tfa_update():
         conn.commit()
         return redirect(url_for('index'))
     except Exception as e:
-        return redirect(url_for('index'), error='An error has occurred')
+        flash('An error has occurred')
+        return redirect(url_for('index'))
 
 
 # Users personal account page. Pulls information from database and displays it.
@@ -193,8 +194,8 @@ def account():
         tfa = str(details[3])
         return render_template('account.html', acc_username=username, name=name, email=email, user_tfa=tfa)
     except Exception as e:
-        print(e)
-        return redirect(url_for('index'), error='An error has occurred')
+        flash('An error has occurred')
+        return redirect(url_for('index'))
     finally:
         if conn:
             conn.close()
@@ -238,7 +239,8 @@ def password_change():
         conn.commit()
         return redirect(url_for('account'))
     except Exception as e:
-        return redirect(url_for('index'), error='An error has occurred')
+        flash('An error has occurred')
+        return redirect(url_for('index'))
     finally:
         if conn:
             conn.close()
@@ -276,7 +278,8 @@ def newpost():
         conn.commit()
         return redirect(url_for('index'))
     except Exception as e:
-        return redirect(url_for('index'), error='An error has occurred')
+        flash('An error has occurred')
+        return redirect(url_for('index'))
     finally:
         if conn:
             conn.close()
@@ -310,8 +313,8 @@ def password_reset():
         else:
             return render_template('login.html', logerror='Invalid email')
     except Exception as e:
-        print(e)
-        return redirect(url_for('index'), error='An error has occurred')
+        flash('An error has occurred')
+        return redirect(url_for('index'))
 
     finally:
         if conn:
@@ -332,8 +335,13 @@ def login_user():
         conn = getconn()
         cur = conn.cursor()
         username = request.form['username']
+
         entered_pass = request.form['password']
         cur.execute(search_path)
+
+        if not user_pattern.match(username):
+            flash('An error has occurred during login')
+            return redirect(url_for('index'))
         # Takes the salt stored with the user name, adds and hashes the password provided then checks it against the
         # stored password
         if username and entered_pass:
@@ -371,8 +379,8 @@ def login_user():
             time.sleep(random.choice(n))
             return render_template('login.html', logerror='Invalid username or password')
     except Exception as e:
-        print(e)
-        return redirect(url_for('index'), error='An error has occurred')
+        flash('An error has occurred')
+        return redirect(url_for('index'))
     finally:
         if conn:
             conn.close()
@@ -396,8 +404,8 @@ def two_factor_auth():
         session['tempCode'] = str(tfa_code)
         return render_template('two_factor_auth.html')
     except Exception as e:
-        print(e)
-        return redirect(url_for('index'), error='An error has occurred')
+        flash('An error has occurred')
+        return redirect(url_for('index'))
 
 
 # Checks code entered by user with the code emailed to the account.
@@ -412,8 +420,8 @@ def auth_check():
         else:
             return render_template('two_factor_auth.html', code_error='Incorrect Code')
     except Exception as e:
-        print(e)
-        return redirect(url_for('index'), error='An error has occurred')
+        flash('An error has occurred')
+        return redirect(url_for('index'))
 
 
 @app.after_request

@@ -1,15 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
     <meta charset="UTF-8">
     <title>Title</title>
-        <form action = "/auth_check" method="post">
-        Enter Code: <input type = "text" name = "entered_code" ><br>
-        {{ code_error|safe  }}
-        <input type = "submit" value = "Enter Code" >
-    </form>
-</head>
-<body>
 
+</head>
+
+<body>
+    <div class='mainmenu'>
+        <a href="/">
+            <div class="website-name">Norfolk Music</div>
+        </a>
+        {% if not session.username %}
+        <div class="menu-buttons">
+            <a id="signin-btn" class="menu-login-btn" href="/login">Sign in</a>
+            <a id="signup-btn" class="menu-login-btn" href="/registration">Sign up</a>
+        </div>
+        {% else %}
+
+
+        <div class="menu-buttons">
+            Welcome, {{ session['username'] }}
+            <a id="signup-btn" class="menu-login-btn" href="/account">Account</a>
+            <a id="signup-btn" class="menu-login-btn" href="/logout">Logout</a>
+        </div>
+        {% endif %}
+    </div>
+    <div class="account-tile">
+        <form action="/auth_check" method="post">
+            Enter Two Factor Authentication code form email
+            <input type="text" name="entered_code">
+            {{ code_error|safe }}
+            <input type="submit" value="Enter Code">
+        </form>
+    </div>
 </body>
+
 </html>
