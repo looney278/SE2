@@ -379,8 +379,9 @@ def login_user():
             time.sleep(random.choice(n))
             return render_template('login.html', logerror='Invalid username or password')
     except Exception as e:
-        flash('An error has occurred')
-        return redirect(url_for('index'))
+        print(e)
+        flash('Incorrect user credantials')
+        return redirect(url_for('login'))
     finally:
         if conn:
             conn.close()

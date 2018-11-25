@@ -18,8 +18,9 @@
 
 
 
-        Welcome, {{ session['username']|safe }}
+        
         <div class="menu-buttons">
+                Welcome, {{ session['username']|safe }}
             <a id="signup-btn" class="menu-login-btn" href="/account">Account</a>
             <a id="signup-btn" class="menu-login-btn" href="/logout">Logout</a>
         </div>

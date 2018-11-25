@@ -27,6 +27,15 @@
         </div>
         {% endif %}
     </div>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <ul class=flashes>
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
     <div class="account-tile">
         <div class="login-form">
             <form action="login_user" method="post">
