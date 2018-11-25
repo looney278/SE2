@@ -79,7 +79,7 @@ def index():
     conn = getconn()
     cur = conn.cursor()
     cur.execute(search_path)
-    cur.execute("SELECT * FROM user_posts")
+    cur.execute("SELECT * FROM user_posts ORDER BY datetime DESC")
     posts = cur.fetchall()
     decoded_posts = []
     for post in posts:
@@ -145,12 +145,13 @@ def register_user():
             # Password is salted and hashed, all data is stored in database.
             salt = uuid.uuid4().hex
             hashed_password = hashlib.sha512(password.encode() + salt.encode()).hexdigest()
-            cur.execute("INSERT INTO users VALUES '%s', '%s', '%s', '%s', '%s'" %
+            cur.execute("INSERT INTO users VALUES ('%s', '%s', '%s', '%s', '%s', '%s')" %
                         (username, firstname, lastname, email, hashed_password, salt))
             conn.commit()
             return redirect(url_for('index'))
     except Exception as e:
-        return render_template('index.html', error='An error has occurred')
+        print(e)
+        return redirect(url_for('index'), error='An error has occurred')
     finally:
         if conn:
             conn.close()
@@ -174,7 +175,7 @@ def tfa_update():
         conn.commit()
         return redirect(url_for('index'))
     except Exception as e:
-        return render_template('index.html', error='An error has occurred')
+        return redirect(url_for('index'), error='An error has occurred')
 
 
 # Users personal account page. Pulls information from database and displays it.
@@ -192,7 +193,8 @@ def account():
         tfa = str(details[3])
         return render_template('account.html', acc_username=username, name=name, email=email, user_tfa=tfa)
     except Exception as e:
-        return render_template('index.html', error='An error has occurred')
+        print(e)
+        return redirect(url_for('index'), error='An error has occurred')
     finally:
         if conn:
             conn.close()
@@ -236,7 +238,7 @@ def password_change():
         conn.commit()
         return redirect(url_for('account'))
     except Exception as e:
-        return render_template('index.html', error='An error has occurred')
+        return redirect(url_for('index'), error='An error has occurred')
     finally:
         if conn:
             conn.close()
@@ -269,12 +271,12 @@ def newpost():
         santext = encode_text(sanhtml)
         date_time = str(datetime.now().strftime('%d-%b-%Y %H:%M:%S '))
         # Submits to database.
-        cur.execute("INSERT INTO posts (user_id,datetime,text) VALUES '%s', '%s', '%s'" %
+        cur.execute("INSERT INTO posts (user_id,datetime,text) VALUES ('%s', '%s', '%s')" %
                     (session['id'], date_time, santext))
         conn.commit()
         return redirect(url_for('index'))
     except Exception as e:
-        return render_template('index.html', error='An error has occurred')
+        return redirect(url_for('index'), error='An error has occurred')
     finally:
         if conn:
             conn.close()
@@ -291,13 +293,14 @@ def password_reset():
         # Creates random string of alphanumeric characters, length 10.
         new_password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
         recipient = str(request.form['email'])
-        # E
+        # Emails the user the new password.
         if recipient:
             msg = Message(subject="Password Reset",
                           sender="TestForCoursework@gmail.com",
                           recipients=[recipient],
                           body="New password : " + str(new_password))
             mail.send(msg)
+            # Salts and hashes new password and stores it in the database.
             salt = uuid.uuid4().hex
             new_password_hashed = hashlib.sha512(new_password.encode() + salt.encode()).hexdigest()
             cur.execute("UPDATE users SET password = '%s' WHERE email = '%s'" % (new_password_hashed, recipient))
@@ -307,18 +310,21 @@ def password_reset():
         else:
             return render_template('login.html', logerror='Invalid email')
     except Exception as e:
-        return render_template('index.html', error='An error has occurred')
+        print(e)
+        return redirect(url_for('index'), error='An error has occurred')
 
     finally:
         if conn:
             conn.close()
 
 
+# Password reset page.
 @app.route('/pass_reset', methods=['GET'])
 def pass_reset():
     return render_template('password_reset_page.html')
 
 
+# Takes username/password and will login user if correct.
 @app.route('/login_user', methods=['POST'])
 def login_user():
     try:
@@ -338,9 +344,11 @@ def login_user():
             tfa = bool(data[2])
             attempts = int(data[3])
             userid = str(data[4])
+            # Attempts used to stop brute force logins. 3 strikes and you're out.
             if attempts < 3:
                 sub_hashed_password = hashlib.sha512(entered_pass.encode() + salt.encode()).hexdigest()
                 if stored_pass == sub_hashed_password:
+                    # successful login resets attempts.
                     cur.execute("UPDATE users SET attempts = 0 WHERE username = '%s'" % username)
                     conn.commit()
                     if tfa is True:
@@ -352,6 +360,7 @@ def login_user():
                 else:
                     cur.execute("UPDATE users SET attempts = attempts + 1 WHERE username = '%s'" % username)
                     conn.commit()
+                    # Used to inhibit account enumeration.
                     time.sleep(random.choice(n))
                     return render_template('login.html', logerror='Invalid username or password')
                 return redirect(url_for('index'))
@@ -362,12 +371,14 @@ def login_user():
             time.sleep(random.choice(n))
             return render_template('login.html', logerror='Invalid username or password')
     except Exception as e:
-        return render_template('index.html', error='An error has occurred')
+        print(e)
+        return redirect(url_for('index'), error='An error has occurred')
     finally:
         if conn:
             conn.close()
 
 
+# Emails a randomly generated code to the users' email address.
 @app.route('/two_factor_auth', methods=['GET'])
 def two_factor_auth():
     try:
@@ -385,9 +396,11 @@ def two_factor_auth():
         session['tempCode'] = str(tfa_code)
         return render_template('two_factor_auth.html')
     except Exception as e:
-        return render_template('index.html', error='An error has occurred')
+        print(e)
+        return redirect(url_for('index'), error='An error has occurred')
 
 
+# Checks code entered by user with the code emailed to the account.
 @app.route('/auth_check', methods=['POST'])
 def auth_check():
     try:
@@ -399,7 +412,8 @@ def auth_check():
         else:
             return render_template('two_factor_auth.html', code_error='Incorrect Code')
     except Exception as e:
-        return render_template('index.html', error='An error has occurred')
+        print(e)
+        return redirect(url_for('index'), error='An error has occurred')
 
 
 @app.after_request
