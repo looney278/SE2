@@ -8,7 +8,6 @@ import random
 import string
 import time
 from datetime import datetime
-# Please don't judge my spaghetti code :(
 
 # RegEx for email.
 email_pattern = re.compile("^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
@@ -16,9 +15,10 @@ email_pattern = re.compile("^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
 pass_pattern = re.compile("(?!^[0-9]*$)(?!^[a-zA-Z]*$)^([a-zA-Z0-9]{6,255})$")
 # RegEx for username 3-20 characters
 user_pattern = re.compile("^(?=.{3,20}$)[A-Za-z0-9]+(?:[ _-][A-Za-z0-9]+)*$")
-#RegEx for First and Second name
-name_pattern = re.compile("^[A-Za-z]+$") 
+# RegEx for First and Second name
+name_pattern = re.compile("^[A-Za-z]+$")
 
+# Settings for the email account we will use to send out emails to user.
 mail_settings = {
     "MAIL_SERVER": 'smtp.gmail.com',
     "MAIL_PORT": 465,
@@ -27,7 +27,8 @@ mail_settings = {
     "MAIL_USERNAME": 'TestForCoursework@gmail.com',
     "MAIL_PASSWORD": 'Potato555'
 }
-#Random list gen for enumeration delay
+
+# Random list gen for enumeration delay
 n = list()
 while len(n) < 20:
     randomNo = random.uniform(0.1, 0.3)
@@ -42,27 +43,28 @@ app.secret_key = 'mSMKW@Oa^8ingejvKj_<8Je1;_|Y&]n,J<^EK@!pupC=Mg.$;Df?query|`}a|
 
 search_path = 'SET search_path TO assignment'
 
-search_path = 'SET search_path TO assignment'
+
+# SQL Injection protection. Converts 'risk' text into garbage and converts it back for display.
+def encode_text(text):
+    replacement_string = text.replace(";", "%$MSVZO")  # replacing semicolon
+    replacement_string = replacement_string.replace("--", "%$6SVA1")  # replacing --
+    replacement_string = replacement_string.replace("'", "%$9XVAQ")  # replacing '
+    return replacement_string
 
 
+def decode_text(text):
+    replacement_string = text.replace("%$MSVZO", ";")
+    replacement_string = replacement_string.replace("%$6SVA1", "--")
+    replacement_string = replacement_string.replace("%$9XVAQ", "'")
+    return replacement_string
 
-#some sql injection protection to be used in user posts
-def encodeText(text):
-    newstr = text.replace(";","%$MSVZO") #replacing semicolon
-    newstr = newstr.replace("--","%$6SVA1") #replacing --
-    newstr = newstr.replace("'","%$9XVAQ") #replacing '
-    return newstr
 
-def decodeText(text):
-    newstr = text.replace("%$MSVZO",";")
-    newstr = newstr.replace("%$6SVA1","--")
-    newstr = newstr.replace("%$9XVAQ","'")
-    return newstr
-
-def sanitiseHTML(text):
-    sanhtml = text.replace("<","&lt;")
-    sanhtml = sanhtml.replace(">","&gt;")
+# Stops script being executed in posts by replacing literal HTML tags with the HTML converted equivalent  
+def sanitise_html(text):
+    sanhtml = text.replace("<", "&lt;")
+    sanhtml = sanhtml.replace(">", "&gt;")
     return sanhtml
+
 
 # creates initial connection to the database
 def getconn():
@@ -74,21 +76,17 @@ def getconn():
 @app.route('/')
 @app.route('/index')
 def index():
-    conn = None
-
-    q="select * from user_posts"
     conn = getconn()
     cur = conn.cursor()
     cur.execute(search_path)
-    cur.execute(q)
+    cur.execute("SELECT * FROM user_posts")
     posts = cur.fetchall()
-    decodedPosts = []
+    decoded_posts = []
     for post in posts:
-        #post[5] = decodeText(post[5])
-        decodedText = decodeText(post[5])
-        newarr = [post[0],post[1],post[2],post[3],post[4],decodedText]  
-        decodedPosts.append(newarr)
-    return render_template('index.html', posts=decodedPosts)
+        decoded_text = decode_text(post[5])
+        newarr = [post[0], post[1], post[2], post[3], post[4], decoded_text]
+        decoded_posts.append(newarr)
+    return render_template('index.html', posts=decoded_posts)
 
 
 @app.route('/registration')
@@ -116,15 +114,16 @@ def register_user():
         elif not email == confemail:
             return render_template('registration.html', emailError='Please ensure emails match.')
         elif not pass_pattern.match(password):
-            return render_template('registration.html', passwordError='Password much contain at least 1 letter, '                                                                      '1 number and be between 6-15 characters long')
+            return render_template('registration.html', passwordError='Password much contain at least 1 letter, '
+                                                                      '1 number and be between 6-15 characters long')
         elif not user_pattern.match(username):
             return render_template('registration.html', usernameError='Username must be between 3-20 characters, '
                                                                       'consist of alphanumerics, -, _ and spaces.'
                                                                       'No more than 2 -, _ or spaces consecutively')
-        elif not name_pattern.match(firstname): 
-            return render_template('registration.html', nameError='Name should use English alphabet characters only')    
-        elif not name_pattern.match(lastname): 
-            return render_template('registration.html', nameError='Name should use English alphabet characters only')                                                           
+        elif not name_pattern.match(firstname):
+            return render_template('registration.html', nameError='Name should use English alphabet characters only')
+        elif not name_pattern.match(lastname):
+            return render_template('registration.html', nameError='Name should use English alphabet characters only')
         elif not password == confpassword:
             return render_template('registration.html', passwordError='Please ensure passwords match.')
         else:
@@ -133,33 +132,24 @@ def register_user():
             cur.execute(search_path)
 
             # duplicate username check
-            #cur.execute("SELECT username FROM users where username = (%s)", (username,))
-            q = "SELECT username FROM users where username = '"+username+"'"
-            cur.execute(q)
+            cur.execute("SELECT username FROM users where username = '%s'" % username)
             if cur.fetchone() is not None:
                 return render_template('registration.html', usernameError='Username already exists')
 
             # duplicate email check
-            #cur.execute("SELECT email FROM users where email = (%s)", (email,))
-            q = "SELECT email FROM users where email = '"+email+"'"
-            cur.execute(q)
+            cur.execute("SELECT email FROM users where email = '%s'" % email)
             if cur.fetchone() is not None:
                 return render_template('registration.html', emailError='Email already registered')
 
             # after all checks are done, password is salted and hashed.
             salt = uuid.uuid4().hex
             hashed_password = hashlib.sha512(password.encode() + salt.encode()).hexdigest()
-
-            #cur.execute("INSERT INTO users VALUES (%s, %s, %s, %s, %s, %s)", \
-             #           [username, firstname, lastname, email, hashed_password, salt])
-
-            q = "INSERT INTO users VALUES ('"+username+"','"+firstname+"', '"+lastname+"', '"+email+"', '"+hashed_password+"', '"+salt+"')"
-            cur.execute(q)
+            cur.execute("INSERT INTO users VALUES '%s', '%s', '%s', '%s', '%s'" %
+                        (username, firstname, lastname, email, hashed_password, salt))
             conn.commit()
-            # session['username'] = username
             return redirect(url_for('index'))
     except Exception as e:
-        return render_template('error.html', error_message=e)
+        return render_template('index.html', error='An error has occurred')
     finally:
         if conn:
             conn.close()
@@ -175,15 +165,13 @@ def tfa_update():
         if request.form.getlist('tfa'):
             update = str(request.form.getlist('tfa')[0])
         if update == 'on':
-            #cur.execute("UPDATE users SET tfa = TRUE WHERE username = '%s'" % session['username'])
-            cur.execute("UPDATE users SET tfa = TRUE WHERE username = ?", (session['username']))
+            cur.execute("UPDATE users SET tfa = TRUE WHERE username = '%s'" % session['username'])
         else:
-            #cur.execute("UPDATE users SET tfa = FALSE WHERE username = '%s'" % session['username'])
-            cur.execute("UPDATE users SET tfa = FALSE WHERE username = ?", (session['username']))
+            cur.execute("UPDATE users SET tfa = FALSE WHERE username = '%s'" % session['username'])
         conn.commit()
         return redirect(url_for('index'))
     except Exception as e:
-        return render_template('error.html', error_message=e)
+        return render_template('index.html', error='An error has occurred')
 
 
 @app.route('/account', methods=['GET'])
@@ -193,15 +181,14 @@ def account():
         cur = conn.cursor()
         cur.execute(search_path)
         username = session["username"]
-        #cur.execute("SELECT firstname, lastname, email, tfa FROM users WHERE username = '%s'" % username)
-        cur.execute("SELECT firstname, lastname, email, tfa FROM users WHERE username = ?", (username))
+        cur.execute("SELECT firstname, lastname, email, tfa FROM users WHERE username = '%s'" % username)
         details = cur.fetchone()
         name = str(details[0]) + " " + str(details[1])
         email = str(details[2])
         tfa = str(details[3])
         return render_template('account.html', acc_username=username, name=name, email=email, user_tfa=tfa)
     except Exception as e:
-        return render_template('error.html', error_message=e)
+        return render_template('index.html', error='An error has occurred')
     finally:
         if conn:
             conn.close()
@@ -219,35 +206,31 @@ def password_change():
         conn = getconn()
         cur = conn.cursor()
         cur.execute(search_path)
-        #cur.execute("SELECT password FROM users WHERE username = '%s'" % session['username'])
-        cur.execute("SELECT password FROM users WHERE username = ?", (session['username']))
+        cur.execute("SELECT password FROM users WHERE username = '%s'" % session['username'])
         correct_old_pass = str(cur.fetchone()[0])
         entered_old_pass = request.form['old_pass']
         new_pass = request.form['new_pass']
         conf_new_pass = request.form['conf_new_pass']
         if new_pass is not conf_new_pass:
             render_template('password_change.html', pass_error="New passwords must match")
-        #cur.execute("SELECT salt FROM users WHERE username = '%s'" % session['username'])
-        cur.execute("SELECT salt FROM users WHERE username = ?", (session['username']))
+        cur.execute("SELECT salt FROM users WHERE username = '%s'" % session['username'])
         salt = str(cur.fetchone()[0])
         hashed_password = hashlib.sha512(entered_old_pass.encode() + salt.encode()).hexdigest()
         if hashed_password != correct_old_pass:
             return render_template('password_change.html', pass_error="incorrect password")
         salt = uuid.uuid4().hex
         new_hashed_password = hashlib.sha512(new_pass.encode() + salt.encode()).hexdigest()
-        #cur.execute("UPDATE users SET password = '%s' WHERE username = '%s'" %
-                    #(new_hashed_password, session['username']))
-        cur.execute("UPDATE users SET password = '%s' WHERE username = ?",
-                     (new_hashed_password, session['username']))
-        #cur.execute("UPDATE users SET salt = '%s' WHERE username = '%s'" % (salt, session['username']))
-        cur.execute("UPDATE users SET salt = '%s' WHERE username = ?", (salt, session['username']))
+        cur.execute("UPDATE users SET password = '%s' WHERE username = '%s'" %
+                    (new_hashed_password, session['username']))
+        cur.execute("UPDATE users SET salt = '%s' WHERE username = '%s'" % (salt, session['username']))
         conn.commit()
         return redirect(url_for('account'))
     except Exception as e:
-        return render_template('error.html', error_message=e)
+        return render_template('index.html', error='An error has occurred')
     finally:
         if conn:
             conn.close()
+
 
 @app.route('/login')
 def login():
@@ -260,27 +243,27 @@ def logout():
     return redirect(url_for('index'))
 
 
-@app.route('/newpost', methods=['POST']) 
-def newpost(): 
+@app.route('/newpost', methods=['POST'])
+def newpost():
     try:
         conn = None
         conn = getconn()
         cur = conn.cursor()
         cur.execute(search_path)
         text = request.form['post-text']
-        sanhtml = sanitiseHTML(text) 
-        santext = encodeText(sanhtml)
+        sanhtml = sanitise_html(text)
+        santext = encode_text(sanhtml)
         dt = str(datetime.now().strftime('%d-%b-%Y %H:%M:%S '))
-        q = "INSERT INTO posts (user_id,datetime,text) VALUES ("+session['id']+",'"+dt+"','"+santext+"')"
-        cur.execute(q)
+        cur.execute("INSERT INTO posts (user_id,datetime,text) VALUES '%s', '%s', '%s'" % (session['id'], dt, santext))
         conn.commit()
-        return redirect(url_for('index'))  
+        return redirect(url_for('index'))
     except Exception as e:
         print(e)
-        return redirect(url_for('index'))  
+        return redirect(url_for('index'))
     finally:
         if conn:
-            conn.close()  
+            conn.close()
+
 
 @app.route('/password_reset', methods=['POST'])
 def password_reset():
@@ -299,43 +282,23 @@ def password_reset():
             mail.send(msg)
             salt = uuid.uuid4().hex
             new_password_hashed = hashlib.sha512(new_password.encode() + salt.encode()).hexdigest()
-            #cur.execute("UPDATE users SET password = '%s' WHERE email = '%s'" % (new_password_hashed, recipient))
-            cur.execute("UPDATE users SET password = '%s' WHERE email = ?", (new_password_hashed, recipient))
-            #cur.execute("UPDATE users SET salt = '%s' WHERE email = '%s'" % (salt, recipient))
-            cur.execute("UPDATE users SET salt = '%s' WHERE email = ?", (salt, recipient))
+            cur.execute("UPDATE users SET password = '%s' WHERE email = '%s'" % (new_password_hashed, recipient))
+            cur.execute("UPDATE users SET salt = '%s' WHERE email = '%s'" % (salt, recipient))
             conn.commit()
             return render_template('password_reset_redirect.html', email=recipient)
         else:
             return render_template('login.html', logerror='Invalid email')
     except Exception as e:
-        return render_template('error.html', error_message=e)
+        return render_template('index.html', error='An error has occurred')
 
     finally:
         if conn:
             conn.close()
 
+
 @app.route('/pass_reset', methods=['GET'])
 def pass_reset():
     return render_template('password_reset_page.html')
-
-
-# @app.route('/new_post', methods=['POST'])
-# def new_post():
-#     try:
-#         conn = None
-#         conn = getconn()
-#         cur = conn.cursor()
-#         cur.execute(search_path)
-#         contents = request.form['text']
-
-#         cur.execute("INSERT INTO posts(username, content) VALUES ('%s', '%s')" % (session['username'], contents))
-#         conn.commit()
-#         return redirect(url_for('index'))
-#     except Exception as e:
-#         return render_template('error.html', error_message=e)
-#     finally:
-#         if conn:
-#             conn.close()
 
 
 @app.route('/login_user', methods=['POST'])
@@ -350,8 +313,7 @@ def login_user():
         # Takes the salt stored with the user name, adds and hashes the password provided then checks it against the
         # stored password
         if username and entered_pass:
-            #cur.execute("SELECT password, salt, tfa, attempts, id FROM users WHERE username = '%s'" % username)
-            cur.execute("SELECT password, salt, tfa, attempts, id FROM users WHERE username = ?", (username))
+            cur.execute("SELECT password, salt, tfa, attempts, id FROM users WHERE username = '%s'" % username)
             data = cur.fetchone()
             stored_pass = str(data[0])
             salt = str(data[1])
@@ -361,8 +323,7 @@ def login_user():
             if attempts < 3:
                 sub_hashed_password = hashlib.sha512(entered_pass.encode() + salt.encode()).hexdigest()
                 if stored_pass == sub_hashed_password:
-                    #cur.execute("UPDATE users SET attempts = 0 WHERE username = '%s'" % username)
-                    cur.execute("UPDATE users SET attempts = 0 WHERE username = ?", (username))
+                    cur.execute("UPDATE users SET attempts = 0 WHERE username = '%s'" % username)
                     conn.commit()
                     if tfa is True:
                         session['tempName'] = username
@@ -371,8 +332,7 @@ def login_user():
                         session['username'] = username
                         session['id'] = userid
                 else:
-                    #cur.execute("UPDATE users SET attempts = attempts + 1 WHERE username = '%s'" % username)
-                    cur.execute("UPDATE users SET attempts = attempts + 1 WHERE username = ?", (username))
+                    cur.execute("UPDATE users SET attempts = attempts + 1 WHERE username = '%s'" % username)
                     conn.commit()
                     time.sleep(random.choice(n))
                     return render_template('login.html', logerror='Invalid username or password')
@@ -384,12 +344,10 @@ def login_user():
             time.sleep(random.choice(n))
             return render_template('login.html', logerror='Invalid username or password')
     except Exception as e:
-        return render_template('error.html', error_message=e)
+        return render_template('index.html', error='An error has occurred')
     finally:
         if conn:
             conn.close()
-           
-
 
 
 @app.route('/two_factor_auth', methods=['GET'])
@@ -399,8 +357,7 @@ def two_factor_auth():
         cur = conn.cursor()
         cur.execute(search_path)
         tfa_code = ''.join(random.choices(string.digits, k=6))
-        #cur.execute("SELECT email FROM users WHERE username = '%s'" % session['tempName'])
-        cur.execute("SELECT email FROM users WHERE username = ?", (session['tempName']))
+        cur.execute("SELECT email FROM users WHERE username = '%s'" % session['tempName'])
         recipient = str(cur.fetchone()[0])
         msg = Message(subject="Two Factor Authentication",
                       sender="TestForCoursework@gmail.com",
@@ -410,7 +367,7 @@ def two_factor_auth():
         session['tempCode'] = str(tfa_code)
         return render_template('two_factor_auth.html')
     except Exception as e:
-        return render_template('error.html', error_message=e)
+        return render_template('index.html', error='An error has occurred')
 
 
 @app.route('/auth_check', methods=['POST'])
@@ -424,7 +381,7 @@ def auth_check():
         else:
             return render_template('two_factor_auth.html', code_error='Incorrect Code')
     except Exception as e:
-        return render_template('error.html', error_message=e)
+        return render_template('index.html', error='An error has occurred')
 
 
 @app.after_request
@@ -432,12 +389,6 @@ def apply_caching(response):
     response.headers["X-Frame-Options"] = "SAMEORIGIN"
     response.headers['Content-Security-Policy'] = "default-src 'self'"
     return response
-
-def connection():
-    conn = getconn()
-    cur = conn.cursor()
-    cur.execute(search_path)
-    return cur
 
 
 if __name__ == "__main__":
