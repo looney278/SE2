@@ -5,10 +5,11 @@ CREATE TABLE Users
 (
 	Username VARCHAR(20) NOT NULL UNIQUE,
 	FirstName VARCHAR(20)  NOT NULL,
-	Surname VARCHAR(40)  NOT NULL,
+	lastname VARCHAR(40)  NOT NULL,
 	Email VARCHAR(40) NOT NULL,
 	Password VARCHAR(512) NOT NULL,
 	Salt VARCHAR(512) NOT NULL,
+    id INTEGER NOT NULL,
 	Tfa BOOLEAN NOT NULL DEFAULT FALSE,
 	attempts INT NOT NULL,
 	PRIMARY KEY(Username)
@@ -17,8 +18,16 @@ CREATE TABLE Users
 CREATE TABLE Posts
 (
 	ID SERIAL NOT NULL,
-	Username VARCHAR(20) NOT NULL,
-	Content VARCHAR(512) NOT NULL,
-	Time TIMESTAMP default current_timestamp NOT NULL,
+	User_id INTEGER NOT NULL,
+	datetime TIMESTAMP default current_timestamp NOT NULL,
+    text VARCHAR(512) NOT NULL,
 	PRIMARY KEY(ID)
 );
+SELECT u.id,
+    u.username,
+    u.firstname,
+    u.lastname,
+    p.datetime,
+    p.text
+   FROM assignment.posts p
+     JOIN assignment.users u ON p.user_id = u.id;
